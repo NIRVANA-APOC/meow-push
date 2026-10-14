@@ -1,0 +1,4 @@
+interface:
+  display_name: "MeoW Push"
+  short_description: "Send text or HTML push messages to a MeoW nickname via the meow CLI"
+  default_prompt: "Use $meow-push to send a MeoW push message to the specified nickname."
