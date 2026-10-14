@@ -29,6 +29,25 @@ cargo build --release --manifest-path cli/Cargo.toml
 ./cli/target/release/meow --help
 ```
 
+### Static build (musl)
+
+A fully static binary (no glibc dependency) can be built with the musl target:
+
+```bash
+# Arch Linux prerequisites
+sudo pacman -S musl rust-musl
+
+cargo build --release --target x86_64-unknown-linux-musl --manifest-path cli/Cargo.toml
+# -> cli/target/x86_64-unknown-linux-musl/release/meow
+#    static-pie linked, stripped, ~4.7 MB
+```
+
+`cli/.cargo/config.toml` sets `CC_x86_64_unknown_linux_musl=musl-gcc` so the C code in `ring` (rustls crypto backend) compiles against musl. Install the static binary system-wide with:
+
+```bash
+cargo install --path cli --target x86_64-unknown-linux-musl --locked
+```
+
 ## Quick start
 
 ```bash
@@ -131,6 +150,8 @@ ln -s "$(pwd)" ~/.codex/skills/meow-push
 ├── agents/
 │   └── openai.yaml          # Codex UI metadata
 └── cli/
+    ├── .cargo/
+    │   └── config.toml      # musl static build settings
     ├── Cargo.toml
     ├── Cargo.lock
     └── src/main.rs          # CLI implementation + tests

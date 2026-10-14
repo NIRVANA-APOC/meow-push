@@ -1,0 +1,10 @@
+# Cross-compile settings for fully static musl builds.
+#
+#   cargo build --release --target x86_64-unknown-linux-musl
+#
+# On Arch Linux this requires the `musl` (provides musl-gcc, needed by ring's
+# C code) and `rust-musl` (musl std) packages. The environment variable below
+# is only read by the C compiler when targeting musl; host builds are
+# unaffected.
+[env]
+CC_x86_64_unknown_linux_musl = "musl-gcc"
