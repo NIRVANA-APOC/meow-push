@@ -22,13 +22,18 @@ The offline API reference is in [references/api.md](references/api.md); no need 
 command -v meow || echo "MISSING"
 ```
 
-If `meow` is missing, install it from the repository root:
+If `meow` is missing, install one of the two implementations from a repository checkout:
 
 ```bash
-cargo install --path cli --locked
+# TypeScript: cross-platform out of the box, needs Node.js >= 18.17, no build step
+node ts-cli/dist/index.js --help    # run directly
+npm install -g ./ts-cli             # or install it as `meow`
+
+# Rust: single binary, optional fully static musl build
+cargo install --path rust-cli --locked
 ```
 
-(When working from a checkout without installing, `cli/target/release/meow` can be used instead. The examples below assume `meow` is on `PATH`.)
+The examples below assume `meow` is on `PATH` (replace it with `node ts-cli/dist/index.js` when running the TypeScript CLI from a checkout).
 
 Optional: set a default nickname so it can be omitted from `push`:
 

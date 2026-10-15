@@ -1,8 +1,16 @@
 # MeoW Push
 
-A Rust CLI plus an agent skill for pushing messages to MeoW nicknames via the [MeoW Push API](https://www.chuckfang.com/MeoW/api_doc.html) (`api.chuckfang.com`).
+A Rust CLI, a zero-dependency TypeScript CLI, and an agent skill for pushing messages to MeoW nicknames via the [MeoW Push API](https://www.chuckfang.com/MeoW/api_doc.html) (`api.chuckfang.com`).
 
-- **`cli/`** — the `meow` command-line tool
+| | `ts-cli/` | `rust-cli/` |
+| --- | --- | --- |
+| Runtime | Node.js ≥ 18.17 | none |
+| Install | `npm install -g ./ts-cli` | `cargo install --path rust-cli` |
+| Cross-platform | Windows / macOS / Linux out of the box | build per platform (musl static supported) |
+| Dependencies | zero runtime dependencies | single static binary (optional) |
+
+Both implementations share the same command surface, config file, environment variables, exit codes, and JSON output.
+
 - **`SKILL.md`** — agent instructions for using the CLI safely and correctly
 - **`references/api.md`** — offline API reference
 
@@ -12,24 +20,46 @@ A Rust CLI plus an agent skill for pushing messages to MeoW nicknames via the [M
 - Text/HTML messages, title, tap-through link, notification icon, HTML display height
 - Long messages via stdin
 - `--dry-run` to preview a request, `--json` for machine-readable output
-- Default nickname via config file (`~/.config/meow/config.toml`)
+- Default nickname via config file (`~/.config/meow/config.toml`, shared by both CLIs)
 - Business status parsing with actionable hints (`400/403/404/429/500`)
 - No automatic retries (the API is not idempotent)
 
 ## Install
 
+### TypeScript CLI (cross-platform, out of the box)
+
+Requires [Node.js](https://nodejs.org/) ≥ 18.17 (uses the built-in `fetch`; no runtime dependencies). The compiled `dist/` is committed, so no build step is needed:
+
 ```bash
-cargo install --path cli --locked
+node ts-cli/dist/index.js --help
+```
+
+Install it globally as `meow`:
+
+```bash
+npm install -g ./ts-cli
+```
+
+Rebuild after changing the sources:
+
+```bash
+cd ts-cli && npm install && npm run build
+```
+
+### Rust CLI
+
+```bash
+cargo install --path rust-cli --locked
 ```
 
 Or just build:
 
 ```bash
-cargo build --release --manifest-path cli/Cargo.toml
-./cli/target/release/meow --help
+cargo build --release --manifest-path rust-cli/Cargo.toml
+./rust-cli/target/release/meow --help
 ```
 
-### Static build (musl)
+#### Static build (musl)
 
 A fully static binary (no glibc dependency) can be built with the musl target:
 
@@ -37,18 +67,20 @@ A fully static binary (no glibc dependency) can be built with the musl target:
 # Arch Linux prerequisites
 sudo pacman -S musl rust-musl
 
-cargo build --release --target x86_64-unknown-linux-musl --manifest-path cli/Cargo.toml
-# -> cli/target/x86_64-unknown-linux-musl/release/meow
+cargo build --release --target x86_64-unknown-linux-musl --manifest-path rust-cli/Cargo.toml
+# -> rust-cli/target/x86_64-unknown-linux-musl/release/meow
 #    static-pie linked, stripped, ~4.7 MB
 ```
 
-`cli/.cargo/config.toml` sets `CC_x86_64_unknown_linux_musl=musl-gcc` so the C code in `ring` (rustls crypto backend) compiles against musl. Install the static binary system-wide with:
+`rust-cli/.cargo/config.toml` sets `CC_x86_64_unknown_linux_musl=musl-gcc` so the C code in `ring` (rustls crypto backend) compiles against musl. Install the static binary system-wide with:
 
 ```bash
-cargo install --path cli --target x86_64-unknown-linux-musl --locked
+cargo install --path rust-cli --target x86_64-unknown-linux-musl --locked
 ```
 
 ## Quick start
+
+The examples below use `meow`; replace it with `node ts-cli/dist/index.js` when running the TypeScript CLI from a checkout.
 
 ```bash
 # Basic usage (POST JSON by default)
@@ -149,18 +181,27 @@ ln -s "$(pwd)" ~/.codex/skills/meow-push
 │   └── api.md               # offline API reference
 ├── agents/
 │   └── openai.yaml          # Codex UI metadata
-└── cli/
+├── ts-cli/                  # TypeScript CLI (zero runtime dependencies)
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── src/
+│   ├── test/
+│   └── dist/                # committed build output
+└── rust-cli/                # Rust CLI
     ├── .cargo/
     │   └── config.toml      # musl static build settings
     ├── Cargo.toml
     ├── Cargo.lock
-    └── src/main.rs          # CLI implementation + tests
+    └── src/main.rs          # implementation + tests
 ```
 
 ## Development
 
 ```bash
-cargo test --manifest-path cli/Cargo.toml
-# 5 tests: URL encoding, body construction, GET slash rejection, local mock end-to-end
-cargo clippy --manifest-path cli/Cargo.toml
+# TypeScript: 9 tests (URL/body construction, mock-server end-to-end, config)
+cd ts-cli && npm install && npm run build && npm test
+
+# Rust: 5 tests (URL encoding, body construction, GET slash rejection, mock end-to-end)
+cargo test --manifest-path rust-cli/Cargo.toml
+cargo clippy --manifest-path rust-cli/Cargo.toml
 ```
